@@ -1,6 +1,6 @@
 {
   "name": "game-bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Private event transport for a game with the current ChatGPT session; no model API",
   "author": {
     "name": "Local developer"
