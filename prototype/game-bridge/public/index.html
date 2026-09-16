@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Связь с GPT</title><link rel="stylesheet" href="/style.css"><script src="/client.js" defer></script></head>
+<body><main><header><span class="eyebrow">ПРОВЕРКА ПЕРЕД ПАРТИЕЙ</span><h1>Связь с GPT</h1>
+<p>Нажми кнопку. Ответ GPT должен появиться в чате ниже.</p></header>
+<section class="surface"><p id="status" role="status">Подключаемся…</p>
+<button id="ping" disabled>Передать событие GPT</button>
+<p id="receipt">Это проверка связи, шашки подключим после неё.</p></section>
+<section class="chat"><h2>Чат</h2><div id="messages" role="log" aria-live="polite"></div>
+<form id="form"><label class="sr" for="message">Сообщение GPT</label><input id="message" maxlength="2000" placeholder="Написать GPT…" autocomplete="off" required><button id="send" disabled>Отправить</button></form>
+<p id="agent">Подключение GPT ещё не подтверждено.</p></section>
+<p class="note">Ответы здесь пишет GPT из нашей сессии. Автоматического собеседника нет.</p>
+</main></body></html>

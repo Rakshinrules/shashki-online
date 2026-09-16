@@ -1,0 +1,18 @@
+{
+  "name": "game-bridge",
+  "version": "0.1.0",
+  "description": "Private event transport for a game with the current ChatGPT session; no model API",
+  "author": {
+    "name": "Local developer"
+  },
+  "interface": {
+    "displayName": "Game Bridge",
+    "shortDescription": "Wait for player events and send your own replies.",
+    "longDescription": "Private game event server and chat. Requires deployment and an MCP connection before live use.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Help me use Game Bridge."
+  },
+  "mcpServers": "./.mcp.json"
+}
