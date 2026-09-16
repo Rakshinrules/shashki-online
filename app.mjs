@@ -58,9 +58,11 @@ function send(message){
   try{channel.send(message);}catch{network='Соединение потеряно';session.disconnect();}
 }
 function attach(conn){
+  console.info('[network] attach',side,conn.peer);
+  conn.on('iceStateChanged',state=>console.info('[network] ICE',side,state));
   if(conn.peer!==peerId(other())||(channel&&channel!==conn&&channel.open)){conn.close();return;}
   channel=conn;
-  conn.on('open',()=>{clearTimeout(connectionTimer);showError('');network='Соединено';session.connect();$('invite').open=false;});
+  conn.on('open',()=>{console.info('[network] data channel open',side);clearTimeout(connectionTimer);showError('');network='Соединено';session.connect();$('invite').open=false;});
   conn.on('data',message=>{if(channel!==conn)return;try{session.receive(message);}catch(e){showError(e.message);conn.close();}});
   conn.on('close',()=>{if(channel===conn){channel=null;network='Соперник отключён';session.disconnect();}});
   conn.on('error',()=>{if(channel===conn){network='Соединение прервано';session.disconnect();showError('Партия сохранена. Попробуй подключиться снова.');}});
@@ -75,8 +77,9 @@ function join(){
 }
 function setupPeer(){
   if(typeof window.Peer!=='function'){network='Связь не запущена';showError('Не загрузилась библиотека соединения. Обнови страницу.');render();return;}
-  peer=new window.Peer(peerId(side),{debug:0});
-  peer.on('open',join);peer.on('connection',attach);
+  console.info('[network] PeerJS loaded',side);
+  peer=new window.Peer(peerId(side),{debug:3});
+  peer.on('open',id=>{console.info('[network] signaling ready',side,id);join();});peer.on('connection',attach);
   peer.on('disconnected',()=>{if(!channel?.open){network='Соединение потеряно';session.disconnect();}});
   peer.on('error',e=>{
     if(e.type==='peer-unavailable'){network='Соперник ещё не вошёл';render();return;}
