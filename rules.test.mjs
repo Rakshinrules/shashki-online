@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {Rules as R} from './rules.mjs';
+const board=pieces=>{let b=Array(64).fill('.');for(const [s,p]of Object.entries(pieces))b[R.square(s)]=p;return b.join('');};
+const check=test;
+const notation=b=>R.legal(b,'w').map(R.notation);
+check('initial position and seven opening moves',()=>{const b=R.start();assert.equal(b.length,64);assert.equal(b.split('w').length-1,12);assert.equal(b.split('b').length-1,12);assert.equal(R.legal(b,'w').length,7);assert(R.valid({version:1,gameId:'x',ply:0,board:b,turn:'w'}));});
+check('mandatory backward capture',()=>{const a=notation(board({c3:'w',d2:'b',g3:'w'}));assert.equal(a.length,1);assert.equal(a[0],'c3:e1');});
+check('man may not make a quiet backward move',()=>{assert(!notation(board({c3:'w'})).includes('c3-b2'));});
+check('multiple capture cannot stop early',()=>{const a=notation(board({c3:'w',d4:'b',f6:'b'}));assert.equal(a.length,1);assert.equal(a[0],'c3:e5:g7');});
+check('Russian choice does not force maximum number',()=>{const a=R.legal(board({c3:'w',b4:'b',d4:'b',f6:'b'}),'w');assert(a.some(m=>m.taken.length===1));assert(a.some(m=>m.taken.length===2));});
+check('promotion mid-capture continues as flying king',()=>{const a=R.legal(board({b6:'w',c7:'b',f6:'b'}),'w');assert(a.some(m=>R.notation(m)==='b6:d8:g5'));assert(a.some(m=>R.notation(m)==='b6:d8:h4'));assert(a.every(m=>m.piece==='W'&&m.taken.length===2));});
+check('captured pieces block return during same turn',()=>{const a=R.legal(board({c3:'W',d4:'b',b2:'b'}),'w');assert(a.length>1);assert(a.every(m=>m.taken.length===1));});
+check('flying king has distant landing choices',()=>{const a=notation(board({a1:'W',c3:'b'}));assert(a.includes('a1:d4'));assert(a.includes('a1:h8'));assert.equal(a.length,5);});
+check('own piece blocks flying king',()=>{assert(!notation(board({a1:'W',c3:'w'})).includes('a1-d4'));});
+check('white and black quiet promotion',()=>{assert.equal(R.legal(board({b6:'b'}),'b').length,2);const w=R.legal(board({a7:'w'}),'w');assert.equal(w[0].piece,'W');const b=R.legal(board({h2:'b'}),'b');assert.equal(b[0].piece,'B');});
+check('all pieces captured wins',()=>{const s={version:1,gameId:'x',ply:0,board:board({c3:'w',d4:'b'}),turn:'w',history:[],repetitions:{}};const n=R.apply(s,[R.square('c3'),R.square('e5')]);assert.equal(n.result.winner,'w');assert.equal(n.board[R.square('d4')],'.');});
+check('illegal move rejected',()=>{assert.throws(()=>R.apply({board:R.start(),turn:'w'},[R.square('a3'),R.square('a5')]));});
+check('threefold repetition includes side to move',()=>{let s={version:1,gameId:'x',ply:0,board:board({a1:'W',h6:'B'}),turn:'w',history:[],repetitions:{},quietKingPlies:0};s.repetitions[s.board+'w']=1;for(let k=0;k<2;k++)for(const move of ['a1-b2','h6-g5','b2-a1','g5-h6'])s=R.apply(s,move.split('-').map(R.square));assert.equal(s.result.reason,'threefold');});
+check('material and playable-square invariants over 100 random games',()=>{let rand=91827;const pick=n=>{rand=(Math.imul(rand,1664525)+1013904223)>>>0;return rand%n;};for(let g=0;g<100;g++){let b=R.start(),side='w';for(let ply=0;ply<100;ply++){const ms=R.legal(b,side);if(!ms.length)break;const m=ms[pick(ms.length)],before=Array.from(b).filter(x=>x!=='.').length;assert.equal(Array.from(m.board).filter(x=>x!=='.').length,before-m.taken.length);assert.equal(new Set(m.taken).size,m.taken.length);assert(R.valid({version:1,gameId:'x',ply,board:m.board,turn:side}));b=m.board;side=side==='w'?'b':'w';}}});
+

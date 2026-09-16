@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#335843">
+  <meta name="referrer" content="no-referrer">
+  <title>Шашки · одна доска на двоих</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+<main id="shashki-game">
+  <header class="app-heading"><h1>Шашки</h1><span>Русские · 8 × 8</span></header>
+  <section id="lobby" class="lobby">
+    <p>Создай комнату и передай ссылку сопернику.</p>
+    <button id="create-room" class="sg-retry" type="button">Создать комнату</button>
+  </section>
+  <section id="game" hidden>
+    <div class="sg-header"><span class="sg-person"><span class="sg-dot black" aria-hidden="true"></span><span id="black-name">Чёрные</span><span id="black-count" class="sg-meta">12</span></span><span id="connection" role="status" class="sg-meta">Подключение…</span></div>
+    <div id="board" class="sg-board" role="group" aria-label="Доска русских шашек"></div>
+    <div class="sg-footer"><span class="sg-person"><span class="sg-dot white" aria-hidden="true"></span><span id="white-name">Белые</span><span id="white-count" class="sg-meta">12</span></span><span id="clock" class="sg-meta">00:00</span></div>
+    <div id="turn-status" class="sg-status" role="status" aria-live="polite">Ожидание соперника</div>
+    <div id="last-move" class="sg-last">Белые начинают</div>
+    <p id="error" class="error" role="alert" hidden></p>
+    <button type="button" id="reconnect" class="sg-retry" hidden>Подключиться снова</button>
+    <details id="invite" open><summary>Пригласить соперника</summary><div class="invite-content"><label for="invite-link">Ссылка для второго игрока</label><input id="invite-link" readonly><button id="copy-invite" type="button" class="sg-retry">Скопировать ссылку</button></div></details>
+  </section>
+</main>
+</body>
+</html>
