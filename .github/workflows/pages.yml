@@ -26,7 +26,7 @@ jobs:
       - name: Prepare website files
         run: |
           mkdir _site
-          cp index.html style.css app.mjs rules.mjs session.mjs _site/
+          cp index.html style.css app.mjs rules.mjs session.mjs relay.mjs _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

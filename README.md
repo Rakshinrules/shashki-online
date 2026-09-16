@@ -36,3 +36,7 @@
 - GitHub Pages: https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
 - PeerJS: https://peerjs.com/client/getting-started
 - Ограничения соединения: https://peerjs.com/client/faq
+
+## Резервная связь
+
+Если за 8 секунд WebRTC не подключился, игра использует MQTT через защищённый WebSocket публичного тестового брокера HiveMQ. Сообщения зашифрованы AES-GCM ключом, полученным из случайного идентификатора комнаты; ссылка комнаты даёт доступ к партии. Сообщения не публикуются как retained, история хранится в браузерах. Брокер тестовый, без гарантии доступности. Для постоянного сервиса рекомендуется собственный ретранслятор.

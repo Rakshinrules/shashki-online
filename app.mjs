@@ -1,8 +1,10 @@
+import {Relay} from './relay.mjs';
 import {Rules as R} from './rules.mjs';
 import {Session} from './session.mjs';
 
 const $=id=>document.getElementById(id),grid=$('board');
 let session,peer,channel,room,side,path=[],options=[],note='',network='Подключение…',connectionTimer,renderedPly=-1;
+let relay=null, fallbackTimer;
 const other=()=>side==='w'?'b':'w';
 const peerId=s=>'shashki02-'+room+'-'+s;
 const storageKey=()=>`shashki02:${room}:${side}`;
@@ -54,6 +56,7 @@ for(let i=0;i<64;i++){
   if(dark){e.type='button';e.dataset.square=R.coord(i);e.addEventListener('click',()=>click(i));}else e.setAttribute('aria-hidden','true');grid.append(e);
 }
 function send(message){
+  if(relay){relay.send(message);return;}
   if(!channel?.open){session.disconnect();return;}
   try{channel.send(message);}catch{network='Соединение потеряно';session.disconnect();}
 }
@@ -62,7 +65,7 @@ function attach(conn){
   conn.on('iceStateChanged',state=>console.info('[network] ICE',side,state));
   if(conn.peer!==peerId(other())||(channel&&channel!==conn&&channel.open)){conn.close();return;}
   channel=conn;
-  conn.on('open',()=>{console.info('[network] data channel open',side);clearTimeout(connectionTimer);showError('');network='Соединено';session.connect();$('invite').open=false;});
+  conn.on('open',()=>{console.info('[network] data channel open',side);clearTimeout(connectionTimer);clearTimeout(fallbackTimer);showError('');network='Соединено';session.connect();$('invite').open=false;});
   conn.on('data',message=>{if(channel!==conn)return;try{session.receive(message);}catch(e){showError(e.message);conn.close();}});
   conn.on('close',()=>{if(channel===conn){channel=null;network='Соперник отключён';session.disconnect();}});
   conn.on('error',()=>{if(channel===conn){network='Соединение прервано';session.disconnect();showError('Партия сохранена. Попробуй подключиться снова.');}});
@@ -75,7 +78,23 @@ function join(){
   clearTimeout(connectionTimer);
   connectionTimer=setTimeout(()=>{if(!session.connected){network='Ждём подключения';showError('Соединение пока не установлено. Открой обе ссылки и нажми «Подключиться снова» у чёрных.');render();}},20000);
 }
+function setupRelay(){
+  if(relay)return;
+  console.info('[network] switching to encrypted WebSocket relay',side);
+  clearTimeout(connectionTimer);clearTimeout(fallbackTimer);
+  peer?.destroy();channel=null;session.disconnect();
+  network='Резервная связь: ищем соперника…';showError('');render();
+  relay=new Relay({room,side,
+    onReady:()=>{console.info('[network] relay connected',side);showError('');network='Соединено';session.connect();$('invite').open=false;},
+    onData:m=>{try{session.receive(m);}catch(e){showError(e.message);session.disconnect();}},
+    onOffline:()=>{network='Соперник отключён';session.disconnect();},
+    onError:e=>{console.error('[network] relay',e.message);showError('Ошибка резервной связи: '+e.message);}
+  });
+  relay.start().catch(e=>showError(e.message));
+}
+setInterval(()=>{if(relay?.ready&&session?.connected)session.sync();},5000);
 function setupPeer(){
+  fallbackTimer=setTimeout(()=>{if(!session.connected)setupRelay();},8000);
   if(typeof window.Peer!=='function'){network='Связь не запущена';showError('Не загрузилась библиотека соединения. Обнови страницу.');render();return;}
   console.info('[network] PeerJS loaded',side);
   peer=new window.Peer(peerId(side),{debug:3});
@@ -101,6 +120,6 @@ function enter(){
 }
 $('create-room').addEventListener('click',()=>{const bytes=crypto.getRandomValues(new Uint8Array(12));const id=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');location.hash=new URLSearchParams({room:id,side:'w'}).toString();enter();});
 $('copy-invite').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('invite-link').value);$('copy-invite').textContent='Ссылка скопирована';}catch{$('invite-link').focus();$('invite-link').select();$('copy-invite').textContent='Выделено — скопируй ссылку';}});
-$('reconnect').addEventListener('click',()=>{showError('');if(!peer||peer.destroyed){setupPeer();return;}if(peer.disconnected){peer.reconnect();return;}join();});
+$('reconnect').addEventListener('click',()=>{showError('');if(relay){relay.close();relay=null;setupRelay();return;}if(!peer||peer.destroyed){setupPeer();return;}if(peer.disconnected){peer.reconnect();return;}join();});
 setInterval(()=>{if(!session?.state.startedAt)return;const s=session.state;const n=Math.max(0,Math.floor(((s.result?s.turnStartedAt:Date.now())-s.startedAt)/1000));$('clock').textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');},1000);
 enter();
