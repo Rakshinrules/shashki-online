@@ -1,0 +1,1 @@
+# shashki-online
